@@ -8,42 +8,101 @@
     <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image.prod.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        form { margin-bottom: 20px; }
-        label, input, select { display: block; margin-bottom: 10px; }
-        #result { display: none; }
-        #qr-code { margin-top: 20px; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Create Your AR Experience</h1>
-    <form id="ar-form">
-        <label for="target-image">Upload Target Image:</label>
-        <input type="file" id="target-image" accept="image/*" required>
+    <div class="container">
+        <h1>Create Your AR Experience</h1>
+        <form id="ar-form" class="demo-card">
+            <label for="target-image">Upload Target Image:</label>
+            <input type="file" id="target-image" accept="image/*" required>
+            
+            <label for="contentType">Select Content Type:</label>
+            <select id="contentType" onchange="updateContentUpload()">
+                <option value="image">Image</option>
+                <option value="video">Video</option>
+                <option value="3d-model">3D Model</option>
+                <option value="youtube">YouTube Video</option>
+            </select>
+            
+            <div id="contentUpload">
+                <!-- This div will be populated dynamically based on the content type -->
+            </div>
+            
+            <button type="submit" class="demo-button">Create AR Experience</button>
+        </form>
         
-        <label for="content-type">Content Type:</label>
-        <select id="content-type">
-            <option value="image">Image</option>
-            <option value="video">Video</option>
-            <option value="3d-model">3D Model</option>
-            <option value="youtube">YouTube Video</option>
-        </select>
-        
-        <label for="content-url">Content URL:</label>
-        <input type="text" id="content-url" required>
-        
-        <button type="submit">Create AR Experience</button>
-    </form>
-    
-    <div id="result">
-        <h2>Your AR Experience is Ready!</h2>
-        <p>Unique URL: <span id="unique-url"></span></p>
-        <div id="qr-code"></div>
-        <button id="download-qr">Download QR Code</button>
+        <div id="result" class="demo-card" style="display: none;">
+            <h2>Your AR Experience is Ready!</h2>
+            <p>Unique URL: <span id="unique-url"></span></p>
+            <div id="qr-code"></div>
+            <button id="download-qr" class="demo-button">Download QR Code</button>
+        </div>
+
+        <div id="previewSection" class="demo-card">
+            <h3>Previews</h3>
+            <div id="targetImagePreview"></div>
+            <div id="contentPreview"></div>
+        </div>
     </div>
 
     <script>
+        function updateContentUpload() {
+            const contentType = document.getElementById('contentType').value;
+            const contentUpload = document.getElementById('contentUpload');
+            
+            switch(contentType) {
+                case 'image':
+                case 'video':
+                case '3d-model':
+                    contentUpload.innerHTML = `
+                        <div class="drop-zone">
+                            <span class="drop-zone__prompt">Drop ${contentType} here or click to upload</span>
+                            <input type="file" name="myFile" class="drop-zone__input" accept="${getAcceptedFileTypes(contentType)}">
+                        </div>
+                    `;
+                    break;
+                case 'youtube':
+                    contentUpload.innerHTML = `
+                        <input type="text" id="youtubeUrl" placeholder="Enter YouTube URL">
+                    `;
+                    break;
+            }
+        }
+
+        function getAcceptedFileTypes(contentType) {
+            switch(contentType) {
+                case 'image':
+                    return '.jpg,.jpeg,.png,.gif,.webp';
+                case 'video':
+                    return '.mp4,.webm,.ogg';
+                case '3d-model':
+                    return '.gltf,.glb,.obj,.fbx';
+                default:
+                    return '';
+            }
+        }
+
+        function handleFileUpload(event, previewId) {
+            const file = event.target.files[0];
+            const preview = document.getElementById(previewId);
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (file.type.startsWith('image/')) {
+                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 200px;">`;
+                    } else if (file.type.startsWith('video/')) {
+                        preview.innerHTML = `<video src="${e.target.result}" controls style="max-width: 200px;"></video>`;
+                    } else if (file.name.match(/\.(gltf|glb|obj|fbx)$/)) {
+                        preview.innerHTML = `<p>3D model: ${file.name}</p>`;
+                        // For 3D models, you might want to use a 3D viewer library to show a preview
+                    }
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
         document.getElementById('ar-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -75,6 +134,10 @@
             link.href = qrCanvas.toDataURL();
             link.click();
         });
+
+        // Add event listeners to file inputs
+        document.querySelector('input[name="targetImage"]').addEventListener('change', (e) => handleFileUpload(e, 'targetImagePreview'));
+        document.querySelector('.drop-zone__input').addEventListener('change', (e) => handleFileUpload(e, 'contentPreview'));
     </script>
 </body>
 </html>

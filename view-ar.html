@@ -23,8 +23,21 @@
             .then(response => response.json())
             .then(data => {
                 const content = document.getElementById('ar-content');
-                // Set up content based on data.contentType and data.contentUrl
-                // This part will depend on your specific implementation
+                switch(data.contentType) {
+                    case 'image':
+                        content.innerHTML = `<a-image src="${data.contentUrl}"></a-image>`;
+                        break;
+                    case 'video':
+                        content.innerHTML = `<a-video src="${data.contentUrl}"></a-video>`;
+                        break;
+                    case '3d-model':
+                        content.innerHTML = `<a-entity gltf-model="${data.contentUrl}"></a-entity>`;
+                        break;
+                    case 'youtube':
+                        // You might need to use a special component for YouTube videos in A-Frame
+                        content.innerHTML = `<a-entity youtube="src: ${data.contentUrl}"></a-entity>`;
+                        break;
+                }
             });
     </script>
 </body>
