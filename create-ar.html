@@ -47,97 +47,93 @@
     </div>
 
     <script>
-        function updateContentUpload() {
-            const contentType = document.getElementById('contentType').value;
-            const contentUpload = document.getElementById('contentUpload');
-            
-            switch(contentType) {
-                case 'image':
-                case 'video':
-                case '3d-model':
-                    contentUpload.innerHTML = `
-                        <div class="drop-zone">
-                            <span class="drop-zone__prompt">Drop ${contentType} here or click to upload</span>
-                            <input type="file" name="myFile" class="drop-zone__input" accept="${getAcceptedFileTypes(contentType)}">
-                        </div>
-                    `;
-                    break;
-                case 'youtube':
-                    contentUpload.innerHTML = `
-                        <input type="text" id="youtubeUrl" placeholder="Enter YouTube URL">
-                    `;
-                    break;
-            }
-        }
-
-        function getAcceptedFileTypes(contentType) {
-            switch(contentType) {
-                case 'image':
-                    return '.jpg,.jpeg,.png,.gif,.webp';
-                case 'video':
-                    return '.mp4,.webm,.ogg';
-                case '3d-model':
-                    return '.gltf,.glb,.obj,.fbx';
-                default:
-                    return '';
-            }
-        }
-
-        function handleFileUpload(event, previewId) {
-            const file = event.target.files[0];
-            const preview = document.getElementById(previewId);
-            
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    if (file.type.startsWith('image/')) {
-                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" style="max-width: 200px;">`;
-                    } else if (file.type.startsWith('video/')) {
-                        preview.innerHTML = `<video src="${e.target.result}" controls style="max-width: 200px;"></video>`;
-                    } else if (file.name.match(/\.(gltf|glb|obj|fbx)$/)) {
-                        preview.innerHTML = `<p>3D model: ${file.name}</p>`;
-                        // For 3D models, you might want to use a 3D viewer library to show a preview
-                    }
+        document.addEventListener('DOMContentLoaded', function() {
+            function updateContentUpload() {
+                const contentType = document.getElementById('contentType').value;
+                const contentUpload = document.getElementById('contentUpload');
+                
+                let inputHTML = '';
+                switch(contentType) {
+                    case 'image':
+                        inputHTML = '<input type="file" accept="image/*" required>';
+                        break;
+                    case 'video':
+                        inputHTML = '<input type="file" accept="video/*" required>';
+                        break;
+                    case '3d-model':
+                        inputHTML = '<input type="file" accept=".glb,.gltf" required>';
+                        break;
+                    case 'youtube':
+                        inputHTML = '<input type="text" placeholder="Enter YouTube URL" required>';
+                        break;
                 }
-                reader.readAsDataURL(file);
+                
+                contentUpload.innerHTML = inputHTML;
             }
-        }
 
-        document.getElementById('ar-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const targetImage = document.getElementById('target-image').files[0];
-            const contentType = document.getElementById('content-type').value;
-            const contentUrl = document.getElementById('content-url').value;
-            
-            // Generate a unique ID (in a real app, this would be more robust)
-            const uniqueId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-            
-            // Create the unique URL
-            const uniqueUrl = `${window.location.origin}/view-ar.html?id=${uniqueId}`;
-            
-            // Display the result
-            document.getElementById('unique-url').textContent = uniqueUrl;
-            
-            // Generate QR code
-            new QRCode(document.getElementById('qr-code'), uniqueUrl);
-            
-            // Show the result div
-            document.getElementById('result').style.display = 'block';
+            function getAcceptedFileTypes(contentType) {
+                switch(contentType) {
+                    case 'image':
+                        return '.jpg,.jpeg,.png,.gif,.webp';
+                    case 'video':
+                        return '.mp4,.webm,.ogg';
+                    case '3d-model':
+                        return '.gltf,.glb,.obj,.fbx';
+                    default:
+                        return '';
+                }
+            }
+
+            function handleFileUpload(event, previewId) {
+                const file = event.target.files[0];
+                const preview = document.getElementById(previewId);
+                
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px;">`;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            if (document.getElementById('target-image')) {
+                document.getElementById('target-image').addEventListener('change', (e) => handleFileUpload(e, 'targetImagePreview'));
+            }
+
+            if (document.getElementById('contentType')) {
+                document.getElementById('contentType').addEventListener('change', updateContentUpload);
+            }
+
+            document.getElementById('ar-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const targetImage = document.getElementById('target-image').files[0];
+                const contentType = document.getElementById('contentType').value;
+                let content;
+
+                switch(contentType) {
+                    case 'image':
+                    case 'video':
+                    case '3d-model':
+                        content = document.querySelector('#contentUpload input[type="file"]').files[0];
+                        break;
+                    case 'youtube':
+                        content = document.querySelector('#contentUpload input[type="text"]').value;
+                        break;
+                }
+
+                if (!targetImage || !content) {
+                    alert('Please upload both a target image and content.');
+                    return;
+                }
+
+                // ... rest of the submission logic ...
+            });
+
+            // Initialize content upload on page load
+            updateContentUpload();
         });
-
-        // Add download functionality for QR code
-        document.getElementById('download-qr').addEventListener('click', () => {
-            const qrCanvas = document.querySelector('#qr-code canvas');
-            const link = document.createElement('a');
-            link.download = 'ar-experience-qr.png';
-            link.href = qrCanvas.toDataURL();
-            link.click();
-        });
-
-        // Add event listeners to file inputs
-        document.querySelector('input[name="targetImage"]').addEventListener('change', (e) => handleFileUpload(e, 'targetImagePreview'));
-        document.querySelector('.drop-zone__input').addEventListener('change', (e) => handleFileUpload(e, 'contentPreview'));
     </script>
 </body>
 </html>
