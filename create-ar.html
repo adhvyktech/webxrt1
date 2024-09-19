@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create AR Experience</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        form { margin-bottom: 20px; }
+        label, input, select { display: block; margin-bottom: 10px; }
+        #result { display: none; }
+        #qr-code { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Create Your AR Experience</h1>
+    <form id="ar-form">
+        <label for="target-image">Upload Target Image:</label>
+        <input type="file" id="target-image" accept="image/*" required>
+        
+        <label for="content-type">Content Type:</label>
+        <select id="content-type">
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+            <option value="3d-model">3D Model</option>
+            <option value="youtube">YouTube Video</option>
+        </select>
+        
+        <label for="content-url">Content URL:</label>
+        <input type="text" id="content-url" required>
+        
+        <button type="submit">Create AR Experience</button>
+    </form>
+    
+    <div id="result">
+        <h2>Your AR Experience is Ready!</h2>
+        <p>Unique URL: <span id="unique-url"></span></p>
+        <div id="qr-code"></div>
+        <button id="download-qr">Download QR Code</button>
+    </div>
+
+    <script>
+        document.getElementById('ar-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const targetImage = document.getElementById('target-image').files[0];
+            const contentType = document.getElementById('content-type').value;
+            const contentUrl = document.getElementById('content-url').value;
+            
+            // Generate a unique ID (in a real app, this would be more robust)
+            const uniqueId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+            
+            // Create the unique URL
+            const uniqueUrl = `${window.location.origin}/view-ar.html?id=${uniqueId}`;
+            
+            // Display the result
+            document.getElementById('unique-url').textContent = uniqueUrl;
+            
+            // Generate QR code
+            new QRCode(document.getElementById('qr-code'), uniqueUrl);
+            
+            // Show the result div
+            document.getElementById('result').style.display = 'block';
+        });
+
+        // Add download functionality for QR code
+        document.getElementById('download-qr').addEventListener('click', () => {
+            const qrCanvas = document.querySelector('#qr-code canvas');
+            const link = document.createElement('a');
+            link.download = 'ar-experience-qr.png';
+            link.href = qrCanvas.toDataURL();
+            link.click();
+        });
+    </script>
+</body>
+</html>
